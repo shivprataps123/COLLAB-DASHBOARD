@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getDashboards, createDashboard } from "@/src/modules/dashboard/api";
+import { getDashboards, createDashboard, deleteDashboard, renameDashboard } from "@/src/modules/dashboard/api";
 import { getWorkspaces } from "@/src/modules/workspace/api";
+import { useAuthGuard } from "@/src/modules/auth/useAuthGuard";
 
 export default function DashboardHome() {
   const router = useRouter();
@@ -17,12 +18,14 @@ export default function DashboardHome() {
 
       setWorkspaceId(id);
 
-      const dashRes = await getDashboards(id);
+      const dashRes = await getDashboards();
       setDashboards(dashRes.data);
     };
 
     load();
   }, []);
+
+  useAuthGuard()
 
   const handleCreate = async () => {
     const res = await createDashboard("New Dashboard", workspaceId);
@@ -46,13 +49,58 @@ export default function DashboardHome() {
         {dashboards.map((dash) => (
           <div
             key={dash.id}
-            onClick={() =>
-              router.push(`/dashboard/${dash.id}`)
-            }
-            className="p-4 bg-white rounded shadow cursor-pointer hover:shadow-md"
+            className="p-4 bg-white rounded shadow hover:shadow-md"
           >
-            {dash.name}
+            <div className="flex justify-between items-center">
+              <span
+                onClick={() =>
+                  router.push(`/dashboard/${dash.id}`)
+                }
+                className="cursor-pointer font-medium"
+              >
+                {dash.name}
+              </span>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={async () => {
+                    const newName = prompt(
+                      "Enter new name",
+                      dash.name
+                    );
+                    if (!newName) return;
+
+                    await renameDashboard(dash.id, newName);
+
+                    setDashboards((prev) =>
+                      prev.map((d) =>
+                        d.id === dash.id
+                          ? { ...d, name: newName }
+                          : d
+                      )
+                    );
+                  }}
+                  className="text-blue-500 text-sm"
+                >
+                  Rename
+                </button>
+
+                <button
+                  onClick={async () => {
+                    await deleteDashboard(dash.id);
+
+                    setDashboards((prev) =>
+                      prev.filter((d) => d.id !== dash.id)
+                    );
+                  }}
+                  className="text-red-500 text-sm"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
+
         ))}
       </div>
     </div>

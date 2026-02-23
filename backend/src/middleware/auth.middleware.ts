@@ -2,9 +2,10 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
 export interface AuthRequest extends Request {
-  userId?: string;
+  user?: {
+    userId: string;
+  };
 }
-
 export const authMiddleware = (
   req: AuthRequest,
   res: Response,
@@ -21,7 +22,9 @@ export const authMiddleware = (
       userId: string;
     };
 
-    req.userId = decoded.userId;
+    (req as AuthRequest).user = {
+      userId: decoded.userId,
+    };
     next();
   } catch {
     return res.status(401).json({ message: "Invalid token" });

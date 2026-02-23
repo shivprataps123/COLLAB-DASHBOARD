@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../../config/prisma";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { successResponse } from "../../utils/apiResponse";
-import {z} from "zod";
+import { z } from "zod";
 
 const registerSchema = z.object({
   email: z.email(),
@@ -35,6 +35,12 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 
   const user = await prisma.user.create({
     data: { email, password: hashedPassword, name },
+  });
+  await prisma.workspace.create({
+    data: {
+      name: "My Workspace",
+      ownerId: user?.id,
+    },
   });
 
   return successResponse(res, { userId: user.id }, "User registered", 201);

@@ -14,24 +14,51 @@ model User {
   name      String?
   createdAt DateTime @default(now())
 
-  workspaces Workspace[]
+  workspaces           Workspace[]
+  dashboardMemberships DashboardMember[]
+  activityLogs         ActivityLog[]
 }
 
 model Workspace {
-  id        String   @id @default(uuid())
-  name      String
-  ownerId   String
-  owner     User     @relation(fields: [ownerId], references: [id])
+  id      String @id @default(uuid())
+  name    String
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
 
   dashboards Dashboard[]
 }
 
 model Dashboard {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
   workspaceId String
   layoutJson  Json?
-  version     Int      @default(0)
+  version     Int       @default(0)
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  members      DashboardMember[]
+  activityLogs ActivityLog[]
 }
 
+model DashboardMember {
+  id          String @id @default(uuid())
+  userId      String
+  dashboardId String
+  role        String
+
+  user      User      @relation(fields: [userId], references: [id])
+  dashboard Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dashboardId])
+}
+
+model ActivityLog {
+  id          String   @id @default(uuid())
+  dashboardId String
+  userId      String
+  action      String
+  createdAt   DateTime @default(now())
+
+  dashboard Dashboard @relation(fields: [dashboardId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+}

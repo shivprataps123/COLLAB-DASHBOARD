@@ -27,8 +27,22 @@ export const updateDashboard = async (
   return res.data;
 };
 
-export const getDashboards = async (workspaceId: string) => {
-  const res = await api.get(`/dashboard?workspaceId=${workspaceId}`);
+export const getDashboards = async () => {
+  const res = await api.get(`/dashboard`);
   return res.data;
 };
 
+export const renameDashboard = async (
+  id: string,
+  name: string
+) => {
+  const res = await api.put(`/dashboard/${id}/rename`, {
+    name,
+  });
+  return res.data;
+};
+
+export const deleteDashboard = async (id: string) => {
+  const res = await api.delete(`/dashboard/${id}`);
+  return res.data;
+};

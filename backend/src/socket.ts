@@ -1,6 +1,9 @@
 import { Server } from "socket.io";
+import { prisma } from "./config/prisma";
+import jwt from "jsonwebtoken";
 
 let io: Server;
+
 
 export const initSocket = (server: any) => {
   io = new Server(server, {
@@ -62,13 +65,59 @@ export const initSocket = (server: any) => {
     });
 
 
-    socket.on("layout_update", ({ dashboardId, layout }) => {
-      socket.to(dashboardId).emit("layout_update", layout);
+    socket.on("layout_update", ({ dashboardId, layout, sender }) => {
+      socket.to(dashboardId).emit("layout_update", {
+        layout,
+        sender,
+      });
     });
+
+    socket.on("activity_event", async ({ dashboardId, action }) => {
+
+      const saved = await prisma.activityLog.create({
+        data: {
+          dashboardId,
+          userId: socket.data.userId,
+          action,
+        },
+        include: {
+          user: {
+            select: {
+              email: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      io.to(dashboardId).emit("activity_event", saved);
+    });
+
 
     socket.on("disconnect", () => {
       console.log("User disconnected:", socket.id);
     });
+  });
+
+  io.use((socket, next) => {
+    try {
+      const token = socket.handshake.auth.token;
+
+      if (!token) {
+        return next(new Error("Unauthorized"));
+      }
+
+      const decoded: any = jwt.verify(
+        token,
+        process.env.JWT_SECRET!
+      );
+
+      socket.data.userId = decoded.userId;
+
+      next();
+    } catch (err) {
+      next(new Error("Unauthorized"));
+    }
   });
 
   return io;

@@ -4,31 +4,33 @@ import { AuthRequest } from "../../middleware/auth.middleware";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { successResponse } from "../../utils/apiResponse";
 
-export const createWorkspace = asyncHandler(async (
-  req: AuthRequest,
-  res: Response
-) => {
-  const { name } = req.body;
+export const createWorkspace = asyncHandler(
+  async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.userId;
 
-  const workspace = await prisma.workspace.create({
-    data: {
-      name,
-      ownerId: req.userId!,
-    },
-  });
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-  return successResponse(res, workspace, "Workspace created");
+    const workspace = await prisma.workspace.create({
+      data: {
+        name: req.body.name,
+        ownerId: userId,
+      },
+    });
 
-});
+    return successResponse(res, workspace, "Workspace created");
+  }
+);
 
 export const getWorkspaces = asyncHandler(async (
   req: AuthRequest,
   res: Response
 ) => {
   const workspaces = await prisma.workspace.findMany({
-    where: { ownerId: req.userId },
+    where: { ownerId: req.user?.userId },
   });
 
-    return successResponse(res, workspaces, "Workspace retrieved");
+  return successResponse(res, workspaces, "Workspace retrieved");
 
 });

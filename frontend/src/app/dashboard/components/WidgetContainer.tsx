@@ -1,18 +1,22 @@
 export default function WidgetContainer({
   widget,
   onEdit,
+  role
 }: {
   widget: any;
   onEdit: () => void;
+  role: string;
 }) {
   return (
     <div className="bg-white rounded-xl shadow-sm p-5 h-full border border-gray-200 relative">
-      <button
-        onClick={onEdit}
-        className="absolute top-2 right-2 text-xs text-blue-500"
-      >
-        Edit
-      </button>
+      {role !== "viewer" && (
+        <button
+          onClick={onEdit}
+          className="absolute top-2 right-2 text-xs text-blue-500"
+        >
+          Edit
+        </button>
+      )}
 
       {widget.type === "text" && (
         <div>
